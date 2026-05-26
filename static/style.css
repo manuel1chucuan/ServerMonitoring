@@ -1,0 +1,110 @@
+:root {
+  --bg: #0f1419;
+  --panel: #1a2332;
+  --text: #e7ecf3;
+  --muted: #9aa7b8;
+  --accent: #3d8bfd;
+  --ok: #3dd68c;
+  --warn: #f5a524;
+  --danger: #f31260;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #1b2a44, var(--bg));
+  color: var(--text);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+header h1 { margin: 0 0 0.25rem; font-size: 2rem; }
+.subtitle { color: var(--muted); margin: 0 0 1.5rem; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid #2a3a52;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.value {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0;
+  line-height: 1;
+}
+
+.unit { color: var(--muted); font-size: 0.9rem; }
+
+.updated { color: var(--muted); font-size: 0.9rem; }
+
+.history {
+  margin-top: 2rem;
+  background: var(--panel);
+  border-radius: 16px;
+  border: 1px solid #2a3a52;
+  padding: 1.25rem;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.tab {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid #3a4f6d;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+th, td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #2a3a52;
+  text-align: left;
+}
+
+th { color: var(--muted); font-weight: 600; }
+
+tbody tr:hover { background: rgba(61, 139, 253, 0.08); }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Monitoring</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>Server Monitoring</h1>
+    <p class="subtitle">manuelchucuanserver · muestras cada 5 minutos</p>
+  </header>
+
+  <section class="cards" id="current-cards">
+    <article class="card"><h2>CPU</h2><p class="value" id="cpu-value">--</p><span class="unit">%</span></article>
+    <article class="card"><h2>RAM</h2><p class="value" id="ram-value">--</p><span class="unit" id="ram-detail">--</span></article>
+    <article class="card"><h2>Disco</h2><p class="value" id="disk-value">--</p><span class="unit" id="disk-detail">--</span></article>
+    <article class="card"><h2>Temperatura</h2><p class="value" id="temp-value">--</p><span class="unit">°C</span></article>
+  </section>
+
+  <p class="updated" id="updated-at">Actualizando...</p>
+
+  <section class="history">
+    <div class="history-header">
+      <h2>Historico</h2>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-range="hour">Hora</button>
+        <button class="tab" data-range="day">Dia</button>
+        <button class="tab" data-range="week">Semana</button>
+        <button class="tab" data-range="month">Mes</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha (UTC)</th>
+            <th>CPU %</th>
+            <th>RAM %</th>
+            <th>RAM usada</th>
+            <th>Disco %</th>
+            <th>Disco usado</th>
+            <th>Temp °C</th>
+          </tr>
+        </thead>
+        <tbody id="history-body">
+          <tr><td colspan="7">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
