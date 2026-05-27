@@ -14,6 +14,13 @@ RANGE_WINDOWS = {
     "month": timedelta(days=30),
 }
 
+CHART_BUCKETS = {
+    "hour": None,
+    "day": None,
+    "week": "hour",
+    "month": "day",
+}
+
 
 def init_db() -> None:
     with get_connection() as conn:
@@ -85,11 +92,14 @@ def get_latest() -> dict | None:
     return dict(row) if row else None
 
 
-def get_history(range_key: str, limit: int = 500) -> list[dict]:
+def _validate_range(range_key: str) -> datetime:
     if range_key not in RANGE_WINDOWS:
         raise ValueError(f"Rango invalido: {range_key}")
+    return datetime.now(timezone.utc) - RANGE_WINDOWS[range_key]
 
-    since = datetime.now(timezone.utc) - RANGE_WINDOWS[range_key]
+
+def get_history(range_key: str, limit: int = 500) -> list[dict]:
+    since = _validate_range(range_key)
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -104,3 +114,78 @@ def get_history(range_key: str, limit: int = 500) -> list[dict]:
             )
             rows = cur.fetchall()
     return [dict(row) for row in rows]
+
+
+def get_averages(range_key: str) -> dict:
+    since = _validate_range(range_key)
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT
+                    COUNT(*)::int AS sample_count,
+                    ROUND(AVG(cpu_percent)::numeric, 2) AS cpu_percent,
+                    ROUND(AVG(ram_percent)::numeric, 2) AS ram_percent,
+                    ROUND(AVG(ram_used_mb)::numeric, 0) AS ram_used_mb,
+                    ROUND(AVG(disk_percent)::numeric, 2) AS disk_percent,
+                    ROUND(AVG(disk_used_gb)::numeric, 2) AS disk_used_gb,
+                    ROUND(AVG(temp_celsius)::numeric, 2) AS temp_celsius
+                FROM server_metrics
+                WHERE recorded_at >= %s
+                """,
+                (since,),
+            )
+            row = cur.fetchone()
+    return dict(row) if row else {"sample_count": 0}
+
+
+def get_chart_series(range_key: str, limit: int = 500) -> list[dict]:
+    since = _validate_range(range_key)
+    bucket = CHART_BUCKETS[range_key]
+
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            if bucket is None:
+                cur.execute(
+                    """
+                    SELECT
+                        recorded_at,
+                        cpu_percent,
+                        ram_percent,
+                        disk_percent,
+                        temp_celsius
+                    FROM server_metrics
+                    WHERE recorded_at >= %s
+                    ORDER BY recorded_at ASC
+                    LIMIT %s
+                    """,
+                    (since, limit),
+                )
+            else:
+                cur.execute(
+                    f"""
+                    SELECT
+                        date_trunc(%s, recorded_at) AS recorded_at,
+                        ROUND(AVG(cpu_percent)::numeric, 2) AS cpu_percent,
+                        ROUND(AVG(ram_percent)::numeric, 2) AS ram_percent,
+                        ROUND(AVG(disk_percent)::numeric, 2) AS disk_percent,
+                        ROUND(AVG(temp_celsius)::numeric, 2) AS temp_celsius
+                    FROM server_metrics
+                    WHERE recorded_at >= %s
+                    GROUP BY 1
+                    ORDER BY 1 ASC
+                    LIMIT %s
+                    """,
+                    (bucket, since, limit),
+                )
+            rows = cur.fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_stats(range_key: str) -> dict:
+    return {
+        "range": range_key,
+        "averages": get_averages(range_key),
+        "series": get_chart_series(range_key),
+        "rows": get_history(range_key),
+    }

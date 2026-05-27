@@ -58,6 +58,17 @@ def api_history():
     return jsonify({"range": range_key, "count": len(rows), "rows": rows})
 
 
+@app.route("/api/stats")
+def api_stats():
+    range_key = request.args.get("range", "hour")
+    try:
+        stats = db.get_stats(range_key)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    stats["count"] = len(stats["rows"])
+    return jsonify(stats)
+
+
 def create_app() -> Flask:
     wait_for_database()
     record_metrics()

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Server Monitoring</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <header>
@@ -13,24 +14,72 @@
   </header>
 
   <section class="cards" id="current-cards">
-    <article class="card"><h2>CPU</h2><p class="value" id="cpu-value">--</p><span class="unit">%</span></article>
-    <article class="card"><h2>RAM</h2><p class="value" id="ram-value">--</p><span class="unit" id="ram-detail">--</span></article>
-    <article class="card"><h2>Disco</h2><p class="value" id="disk-value">--</p><span class="unit" id="disk-detail">--</span></article>
-    <article class="card"><h2>Temperatura</h2><p class="value" id="temp-value">--</p><span class="unit">°C</span></article>
+    <article class="card"><h2>CPU actual</h2><p class="value" id="cpu-value">--</p><span class="unit">%</span></article>
+    <article class="card"><h2>RAM actual</h2><p class="value" id="ram-value">--</p><span class="unit" id="ram-detail">--</span></article>
+    <article class="card"><h2>Disco actual</h2><p class="value" id="disk-value">--</p><span class="unit" id="disk-detail">--</span></article>
+    <article class="card"><h2>Temp. actual</h2><p class="value" id="temp-value">--</p><span class="unit">°C</span></article>
   </section>
 
   <p class="updated" id="updated-at">Actualizando...</p>
 
-  <section class="history">
+  <section class="panel range-panel">
     <div class="history-header">
-      <h2>Historico</h2>
-      <div class="tabs" role="tablist">
+      <h2>Analisis por periodo</h2>
+      <div class="tabs" role="tablist" id="range-tabs">
         <button class="tab active" data-range="hour">Hora</button>
         <button class="tab" data-range="day">Dia</button>
         <button class="tab" data-range="week">Semana</button>
         <button class="tab" data-range="month">Mes</button>
       </div>
     </div>
+    <p class="range-label" id="range-label">Promedios de la ultima hora</p>
+
+    <section class="cards averages" id="average-cards">
+      <article class="card avg-card">
+        <h2>CPU promedio</h2>
+        <p class="value" id="avg-cpu">--</p>
+        <span class="unit">%</span>
+      </article>
+      <article class="card avg-card">
+        <h2>RAM promedio</h2>
+        <p class="value" id="avg-ram">--</p>
+        <span class="unit" id="avg-ram-detail">--</span>
+      </article>
+      <article class="card avg-card">
+        <h2>Disco promedio</h2>
+        <p class="value" id="avg-disk">--</p>
+        <span class="unit" id="avg-disk-detail">--</span>
+      </article>
+      <article class="card avg-card">
+        <h2>Temp. promedio</h2>
+        <p class="value" id="avg-temp">--</p>
+        <span class="unit">°C</span>
+      </article>
+    </section>
+    <p class="samples" id="sample-count">Muestras: --</p>
+
+    <div class="charts-grid">
+      <article class="chart-card">
+        <h3>CPU %</h3>
+        <canvas id="chart-cpu"></canvas>
+      </article>
+      <article class="chart-card">
+        <h3>RAM %</h3>
+        <canvas id="chart-ram"></canvas>
+      </article>
+      <article class="chart-card">
+        <h3>Disco %</h3>
+        <canvas id="chart-disk"></canvas>
+      </article>
+      <article class="chart-card">
+        <h3>Temperatura °C</h3>
+        <canvas id="chart-temp"></canvas>
+      </article>
+    </div>
+  </section>
+
+  <section class="history panel">
+    <h2>Historico (tabla)</h2>
     <div class="table-wrap">
       <table>
         <thead>

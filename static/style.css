@@ -55,14 +55,61 @@ header h1 { margin: 0 0 0.25rem; font-size: 2rem; }
 
 .unit { color: var(--muted); font-size: 0.9rem; }
 
-.updated { color: var(--muted); font-size: 0.9rem; }
+.updated { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
 
-.history {
-  margin-top: 2rem;
+.panel {
   background: var(--panel);
   border-radius: 16px;
   border: 1px solid #2a3a52;
   padding: 1.25rem;
+}
+
+.range-panel { margin-bottom: 1.5rem; }
+
+.history { margin-top: 0; }
+
+.history h2 { margin: 0 0 1rem; font-size: 1.1rem; }
+
+.range-label {
+  color: var(--muted);
+  margin: -0.25rem 0 1rem;
+  font-size: 0.95rem;
+}
+
+.samples {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 1.25rem;
+}
+
+.averages { margin-bottom: 0.5rem; }
+
+.avg-card .value { font-size: 2rem; color: var(--accent); }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.chart-card {
+  background: #121a26;
+  border: 1px solid #2a3a52;
+  border-radius: 12px;
+  padding: 1rem;
+  min-height: 220px;
+}
+
+.chart-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.chart-card canvas {
+  width: 100% !important;
+  height: 180px !important;
 }
 
 .history-header {
