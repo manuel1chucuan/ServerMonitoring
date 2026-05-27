@@ -155,3 +155,68 @@ th, td {
 th { color: var(--muted); font-weight: 600; }
 
 tbody tr:hover { background: rgba(61, 139, 253, 0.08); }
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #121a26;
+  border-radius: 12px;
+  border: 1px solid #2a3a52;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.filter-group.hidden { display: none; }
+
+.filter-group label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.filter-group input,
+.filter-group select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid #3a4f6d;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.filter-group input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.filter-hint {
+  font-size: 0.8rem;
+  color: var(--warn);
+  flex: 1 1 100%;
+}
+
+.btn-apply {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-apply:hover { filter: brightness(1.08); }
+
+th:first-child,
+td:first-child {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

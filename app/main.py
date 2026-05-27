@@ -6,6 +6,7 @@ from flask import Flask, jsonify, render_template, request
 
 from app import db
 from app.metrics import collect_snapshot
+from app.ranges import now_local
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("servermonitor")
@@ -34,6 +35,17 @@ def wait_for_database(retries: int = 30, delay_seconds: float = 2.0) -> None:
     raise RuntimeError("No se pudo conectar a PostgreSQL")
 
 
+def _filter_params() -> dict:
+    return {
+        "range_key": request.args.get("range", "hour"),
+        "date_str": request.args.get("date"),
+        "month_str": request.args.get("month"),
+        "year_str": request.args.get("year"),
+        "start_time": request.args.get("start_time"),
+        "end_time": request.args.get("end_time"),
+    }
+
+
 @app.route("/")
 def dashboard():
     return render_template("index.html")
@@ -48,22 +60,27 @@ def api_current():
     return jsonify({"source": "database", "metrics": latest})
 
 
-@app.route("/api/history")
-def api_history():
-    range_key = request.args.get("range", "hour")
-    try:
-        rows = db.get_history(range_key)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
-    return jsonify({"range": range_key, "count": len(rows), "rows": rows})
+@app.route("/api/meta")
+def api_meta():
+    local = now_local()
+    return jsonify(
+        {
+            "timezone": "America/Mazatlan",
+            "timezone_label": "Mazatlan, Sinaloa",
+            "now_local": local.isoformat(),
+            "today": local.date().isoformat(),
+            "current_month": f"{local.year}-{local.month:02d}",
+            "current_year": local.year,
+            "years": db.get_available_years(),
+        }
+    )
 
 
 @app.route("/api/stats")
 def api_stats():
-    range_key = request.args.get("range", "hour")
     try:
-        stats = db.get_stats(range_key)
-    except ValueError as exc:
+        stats = db.get_stats(**_filter_params())
+    except (ValueError, TypeError) as exc:
         return jsonify({"error": str(exc)}), 400
     stats["count"] = len(stats["rows"])
     return jsonify(stats)

@@ -10,7 +10,7 @@
 <body>
   <header>
     <h1>Server Monitoring</h1>
-    <p class="subtitle">manuelchucuanserver · muestras cada 5 minutos</p>
+    <p class="subtitle">manuelchucuanserver · Mazatlan (Sinaloa) · muestras cada 5 min</p>
   </header>
 
   <section class="cards" id="current-cards">
@@ -26,13 +26,39 @@
     <div class="history-header">
       <h2>Analisis por periodo</h2>
       <div class="tabs" role="tablist" id="range-tabs">
-        <button class="tab active" data-range="hour">Hora</button>
-        <button class="tab" data-range="day">Dia</button>
-        <button class="tab" data-range="week">Semana</button>
-        <button class="tab" data-range="month">Mes</button>
+        <button class="tab active" data-range="hour">Por hora</button>
+        <button class="tab" data-range="day">Diario</button>
+        <button class="tab" data-range="month">Mensual</button>
+        <button class="tab" data-range="year">Anual</button>
       </div>
     </div>
-    <p class="range-label" id="range-label">Promedios de la ultima hora</p>
+
+    <div class="filters" id="filters-panel">
+      <div class="filter-group" data-filter="hour">
+        <label for="hour-date">Dia</label>
+        <input type="date" id="hour-date">
+        <label for="hour-start">Inicio</label>
+        <input type="time" id="hour-start" step="60">
+        <label for="hour-end">Fin</label>
+        <input type="time" id="hour-end" step="60" disabled>
+        <span class="filter-hint" id="hour-hint"></span>
+      </div>
+      <div class="filter-group hidden" data-filter="day">
+        <label for="day-date">Dia</label>
+        <input type="date" id="day-date">
+      </div>
+      <div class="filter-group hidden" data-filter="month">
+        <label for="month-picker">Mes</label>
+        <input type="month" id="month-picker">
+      </div>
+      <div class="filter-group hidden" data-filter="year">
+        <label for="year-picker">Anio</label>
+        <select id="year-picker"></select>
+      </div>
+      <button type="button" class="btn-apply" id="btn-apply">Aplicar</button>
+    </div>
+
+    <p class="range-label" id="range-label">Promedios del periodo seleccionado</p>
 
     <section class="cards averages" id="average-cards">
       <article class="card avg-card">
@@ -84,7 +110,7 @@
       <table>
         <thead>
           <tr>
-            <th>Fecha (UTC)</th>
+            <th>Fecha y hora</th>
             <th>CPU %</th>
             <th>RAM %</th>
             <th>RAM usada</th>

@@ -1,25 +1,12 @@
 import os
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+from app.ranges import TimeWindow, resolve_window
+
 DATABASE_URL = os.environ["DATABASE_URL"]
-
-RANGE_WINDOWS = {
-    "hour": timedelta(hours=1),
-    "day": timedelta(days=1),
-    "week": timedelta(days=7),
-    "month": timedelta(days=30),
-}
-
-CHART_BUCKETS = {
-    "hour": None,
-    "day": None,
-    "week": "hour",
-    "month": "day",
-}
 
 
 def init_db() -> None:
@@ -92,36 +79,32 @@ def get_latest() -> dict | None:
     return dict(row) if row else None
 
 
-def _validate_range(range_key: str) -> datetime:
-    if range_key not in RANGE_WINDOWS:
-        raise ValueError(f"Rango invalido: {range_key}")
-    return datetime.now(timezone.utc) - RANGE_WINDOWS[range_key]
-
-
-def get_history(range_key: str, limit: int = 500) -> list[dict]:
-    since = _validate_range(range_key)
+def get_available_years() -> list[int]:
     with get_connection() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT *
+                SELECT DISTINCT EXTRACT(YEAR FROM recorded_at AT TIME ZONE 'America/Mazatlan')::int AS y
                 FROM server_metrics
-                WHERE recorded_at >= %s
-                ORDER BY recorded_at DESC
-                LIMIT %s
-                """,
-                (since, limit),
+                ORDER BY y DESC
+                """
             )
-            rows = cur.fetchall()
-    return [dict(row) for row in rows]
+            years = [row[0] for row in cur.fetchall()]
+    if not years:
+        from app.ranges import now_local
+
+        years = [now_local().year]
+    return years
 
 
-def get_averages(range_key: str) -> dict:
-    since = _validate_range(range_key)
+def _query_window(window: TimeWindow, limit: int = 500) -> tuple[list[dict], list[dict], dict]:
+    params = (window.start_utc, window.end_utc, limit)
+    range_clause = "recorded_at >= %s AND recorded_at < %s"
+
     with get_connection() as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     COUNT(*)::int AS sample_count,
                     ROUND(AVG(cpu_percent)::numeric, 2) AS cpu_percent,
@@ -131,23 +114,15 @@ def get_averages(range_key: str) -> dict:
                     ROUND(AVG(disk_used_gb)::numeric, 2) AS disk_used_gb,
                     ROUND(AVG(temp_celsius)::numeric, 2) AS temp_celsius
                 FROM server_metrics
-                WHERE recorded_at >= %s
+                WHERE {range_clause}
                 """,
-                (since,),
+                (window.start_utc, window.end_utc),
             )
-            row = cur.fetchone()
-    return dict(row) if row else {"sample_count": 0}
+            averages = dict(cur.fetchone() or {"sample_count": 0})
 
-
-def get_chart_series(range_key: str, limit: int = 500) -> list[dict]:
-    since = _validate_range(range_key)
-    bucket = CHART_BUCKETS[range_key]
-
-    with get_connection() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            if bucket is None:
+            if window.chart_bucket is None:
                 cur.execute(
-                    """
+                    f"""
                     SELECT
                         recorded_at,
                         cpu_percent,
@@ -155,37 +130,59 @@ def get_chart_series(range_key: str, limit: int = 500) -> list[dict]:
                         disk_percent,
                         temp_celsius
                     FROM server_metrics
-                    WHERE recorded_at >= %s
+                    WHERE {range_clause}
                     ORDER BY recorded_at ASC
                     LIMIT %s
                     """,
-                    (since, limit),
+                    params,
                 )
             else:
                 cur.execute(
                     f"""
                     SELECT
-                        date_trunc(%s, recorded_at) AS recorded_at,
+                        date_trunc(%s, recorded_at AT TIME ZONE 'America/Mazatlan')
+                            AT TIME ZONE 'America/Mazatlan' AS recorded_at,
                         ROUND(AVG(cpu_percent)::numeric, 2) AS cpu_percent,
                         ROUND(AVG(ram_percent)::numeric, 2) AS ram_percent,
                         ROUND(AVG(disk_percent)::numeric, 2) AS disk_percent,
                         ROUND(AVG(temp_celsius)::numeric, 2) AS temp_celsius
                     FROM server_metrics
-                    WHERE recorded_at >= %s
+                    WHERE {range_clause}
                     GROUP BY 1
                     ORDER BY 1 ASC
                     LIMIT %s
                     """,
-                    (bucket, since, limit),
+                    (window.chart_bucket, window.start_utc, window.end_utc, limit),
                 )
-            rows = cur.fetchall()
-    return [dict(row) for row in rows]
+            series = [dict(row) for row in cur.fetchall()]
+
+            cur.execute(
+                f"""
+                SELECT *
+                FROM server_metrics
+                WHERE {range_clause}
+                ORDER BY recorded_at DESC
+                LIMIT %s
+                """,
+                params,
+            )
+            rows = [dict(row) for row in cur.fetchall()]
+
+    return series, rows, averages
 
 
-def get_stats(range_key: str) -> dict:
+def get_stats(**filter_params) -> dict:
+    window = resolve_window(**filter_params)
+    series, rows, averages = _query_window(window)
     return {
-        "range": range_key,
-        "averages": get_averages(range_key),
-        "series": get_chart_series(range_key),
-        "rows": get_history(range_key),
+        "range": window.range_key,
+        "window": {
+            "label": window.label,
+            "start_utc": window.start_utc.isoformat(),
+            "end_utc": window.end_utc.isoformat(),
+            "crosses_midnight": window.crosses_midnight,
+        },
+        "averages": averages,
+        "series": series,
+        "rows": rows,
     }
